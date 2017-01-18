@@ -1,11 +1,12 @@
-# OpenVPN for Rancher with modular authentication
+# OpenVPN for Docker with modular authentication
 
-OpenVPN server image made to give access to Rancher network with modular authentication.
+OpenVPN server image made to give access to Docker network with modular authentication.
 
 This Server doesn't relies on clients certificates, but on credential based authentication
 
 Current version is shipped with following authentication :
 - httpbasic
+- openshift
 - httpdigest
 - ldap
 - rancherlocal
@@ -18,8 +19,8 @@ Current version is shipped with following authentication :
 
 Each non mandatory environment variable is optionnal and has default value.
 
-Following variables are the answers to common questions during certificate 
-creation process 
+Following variables are the answers to common questions during certificate
+creation process
 - CERT_COUNTRY="US"
 - CERT_PROVINCE="AL"
 - CERT_CITY="Birmingham"
@@ -27,32 +28,32 @@ creation process
 - CERT_EMAIL="nobody@example.com"
 - CERT_OU="IT"
 
-These variables define the network address and CIDR netmask for the ip pool which 
+These variables define the network address and CIDR netmask for the ip pool which
 will be the VPN subnet for OpenVPN to draw client addresses from
-- VPNPOOL_NETWORK="10.43.0.0"
+- VPNPOOL_NETWORK="10.44.0.0"
 - VPNPOOL_CIDR="16"
 
-Next two variables are used in client configuration generation process, 
+Next two variables are used in client configuration generation process,
 to indicate OpenVPN clients where to connect to establish the link
 - REMOTE_IP="ipOrHostname"
 - REMOTE_PORT="1194"
- 
-If you don't want to expose the full Rancher network, you can set your own network
-and netmask with following variables:
+
+If you don't want to expose the full Docker network, you can set your own network
+and netmask with following variables (default values are for Rancher network):
 - ROUTE_NETWORK="10.42.0.0"
 - ROUTE_NETMASK="255.255.0.0"
 
-If you don't want to expose the interunal Rancher metadata api, you can set any 
+When running in Rancher, if you don't want to expose the interunal Rancher metadata api, you can set any
 value to this variable, it will prevent to add the route to metadata api. Default
 is to expose the metadata api, in this case this variable is empty.
 - NO_RANCHER_METADATA_API="" => expose metadata api
 - NO_RANCHER_METADATA_API="1" => do not expose metadata api
 
-You can also set your custom search domain and DNS server pushed to VPN clients:
+You can also set your custom search domain and DNS server pushed to VPN clients (default values are for Rancher network):
 - PUSHDNS="169.254.169.250"
 - PUSHSEARCH="rancher.internal"
 
-There is also an optionnal variable to let you customize OpenVPN server config, 
+There is also an optionnal variable to let you customize OpenVPN server config,
 for example to push your own custom route. This variable accept multiple line by
 adding a simple \n between lines.
 - OPENVPN_EXTRACONF="first line\nsecond line\nthird line"
@@ -128,6 +129,22 @@ docker run -d --privileged=true -p 1194:1194 \
 
 **Warning ! If you use GitHub api url in production, anyone who has a github account will be able to connect your VPN !!**
 
+### Openshift
+
+Authentication is made by trying to connect login to master Openhift Server.
+
+Each variable is mandatory :
+- AUTH_METHOD=openshift
+- AUTH_HTTPBASIC_URL is the http master Openshift server url, ex : AUTH_HTTPBASIC_URL='https://oso-master-0.oso.com:8443'
+
+You can test authentication against your master Openshift server :
+```sh
+docker run -d --privileged=true -p 1194:1194 \
+    -e AUTH_METHOD=openshift \
+    -e AUTH_HTTPBASIC_URL=https://oso-master-0.oso.com:8443 \
+    mdns/rancher-openvpn
+```
+
 ### HTTP Digest
 
 Authentication is made by trying to connect to a HTTP Server with credentials in Digest HTTP Auth mechanism.
@@ -156,7 +173,7 @@ These are mandatory variable to setup ldap authentication :
 - AUTH_LDAP_BASEDN is the base DN to search for, ex: AUTH_LDAP_BASEDN='dc=acme,dc=com'
 - AUTH_LDAP_SEARCH is the ldap search pattern to find user's dn, with a parameter $username, ex : AUTH_LDAP_SEARCH='(uid=$username)'
 
-If your ldap server need to be authenticated to search directory, you can use optionnals binding variables: 
+If your ldap server need to be authenticated to search directory, you can use optionnals binding variables:
 
 - AUTH_LDAP_BINDDN : DN to use in searching processs
 - AUTH_LDAP_BINDPWD : password associated
@@ -193,7 +210,7 @@ docker run -d --privileged=true -p 1194:1194 \
 
 ## Client configuration
 
-The client configuration is printed at dock start on stdout, but you can also 
+The client configuration is printed at dock start on stdout, but you can also
 retrieve it through the "vpn_get_client_config.sh" script.
 
 ```sh
@@ -227,7 +244,7 @@ X0yOqF6doV0+DPt5T+vEeu9oiczscg==
 </ca>
 ```
 
-Save this configuration in your ".ovpn" file, don't forget to replace IPADDRESS 
+Save this configuration in your ".ovpn" file, don't forget to replace IPADDRESS
 and PORT with your server ip and the exposed port to reach OpenVPN server
 
 Here is an example of a final client.ovpn :
