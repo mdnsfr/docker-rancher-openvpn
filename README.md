@@ -7,6 +7,7 @@ This Server doesn't relies on clients certificates, but on credential based auth
 Current version is shipped with following authentication :
 - httpbasic
 - openshift
+- openshift-token
 - httpdigest
 - ldap
 - rancherlocal
@@ -43,8 +44,7 @@ and netmask with following variables (default values are for Rancher network):
 - ROUTE_NETWORK="10.42.0.0"
 - ROUTE_NETMASK="255.255.0.0"
 
-When running in Rancher, if you don't want to expose the interunal Rancher metadata api, you can set any
-value to this variable, it will prevent to add the route to metadata api. Default
+When running in Rancher, if you don't want to expose the interunal Rancher metadata api, you can set any value to this variable, it will prevent to add the route to metadata api. Default
 is to expose the metadata api, in this case this variable is empty.
 - NO_RANCHER_METADATA_API="" => expose metadata api
 - NO_RANCHER_METADATA_API="1" => do not expose metadata api
@@ -69,7 +69,7 @@ Here is the minimal docker run example with **httpbasic** authentication :
 docker run -d --privileged=true -p 1194:1194 \
     -e AUTH_METHOD=httpbasic \
     -e AUTH_HTTPBASIC_URL=https://api.github.com/user \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
 ```
 
 And here is an exhaustive docker run example with ldap authentication :
@@ -101,7 +101,7 @@ docker run -d \
     -v /etc/openvpn \
     --name=vpn \
     -p 1194:1194 \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
 ```
 
 Note bene : First launch takes more time because of certificates and private keys generation
@@ -124,7 +124,7 @@ You can test authentication against the GitHub api server :
 docker run -d --privileged=true -p 1194:1194 \
     -e AUTH_METHOD=httpbasic \
     -e AUTH_HTTPBASIC_URL=https://api.github.com/user \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
 ```
 
 **Warning ! If you use GitHub api url in production, anyone who has a github account will be able to connect your VPN !!**
@@ -142,7 +142,23 @@ You can test authentication against your master Openshift server :
 docker run -d --privileged=true -p 1194:1194 \
     -e AUTH_METHOD=openshift \
     -e AUTH_HTTPBASIC_URL=https://oso-master-0.oso.com:8443 \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
+```
+### Openshift with token
+
+Authentication is made by token accessing to master Openhift Server.
+Token is passed through password variable.
+
+Each variable is mandatory :
+- AUTH_METHOD=openshift-token
+- AUTH_HTTPBASIC_URL is the http master Openshift server url, ex : AUTH_HTTPBASIC_URL='https://oso-master-0.oso.com:8443'
+
+You can test authentication against your master Openshift server :
+```sh
+docker run -d --privileged=true -p 1194:1194 \
+    -e AUTH_METHOD=openshift-token \
+    -e AUTH_HTTPBASIC_URL=https://gcp.mloso.com:443 \
+    mdns/docker-openvpn
 ```
 
 ### HTTP Digest
@@ -158,7 +174,7 @@ You can test authentication against the httpbin sandbox server :
 docker run -d --privileged=true -p 1194:1194 \
     -e AUTH_METHOD=httpdigest \
     -e AUTH_HTTPDIGEST_URL=https://httpbin.org/digest-auth/auth/myuser/mypwd \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
 ```
 
 
@@ -188,7 +204,7 @@ docker run -d --privileged=true -p 1194:1194 --link ldap:ldapsrv \
     -e AUTH_LDAP_SEARCH='(uid=$username)' \
     -e AUTH_LDAP_BINDDN='cn=admin,dc=acme,dc=tld' \
     -e AUTH_LDAP_BINDPWD='mypwd' \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
 ```
 ---
 
@@ -205,7 +221,7 @@ You can test authentication against the Rancher api server :
 docker run -d --privileged=true -p 1194:1194 \
     -e AUTH_METHOD=rancherlocal \
     -e AUTH_HTTPBASIC_URL=https://rancher.example.com/v1/token \
-    mdns/rancher-openvpn
+    mdns/docker-openvpn
 ```
 
 ## Client configuration
