@@ -11,6 +11,8 @@ import kerberos
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.auth import HTTPDigestAuth
+from auth0.v3.authentication import GetToken
+from auth0.v3.exceptions import Auth0Error
 
 def auth_success(username):
     """ Authentication success, simply exiting with no error """
@@ -95,6 +97,14 @@ def auth_rancher_local(url, username, password):
         auth_success(username)
     else:
         auth_failure("Invalid credentials for username "+ username)
+
+def auth_auth0(endpoint, client_id, client_secret, realm, username, password):
+    client = GetToken(endpoint)
+    try:
+        client.login(client_id, client_secret, username, password, None, realm, None)
+        auth_success(username)
+    except Auth0Error, e:
+        auth_failure('Auth0 error: ' + e.message)
 
 if all (k in os.environ for k in ("username","password","AUTH_METHOD")):
     username = os.environ.get('username') 
@@ -182,6 +192,24 @@ if all (k in os.environ for k in ("username","password","AUTH_METHOD")):
         #        auth_success(username)
         #else:
         #    auth_failure("Missing mandatory environement variable KERBEROS_REALM")
+
+    #=====[ Auth0 ]==============================================================
+    # How to test:
+    #   Create an account with Auth0 and add a new client with Grant Type password enabled. Tested only with Auth0 database realm.
+    # Example :
+    #   AUTH_AUTH0_ENDPOINT='yourorganization.auth0.com'
+    #   AUTH_AUTH0_CLIENT_KEY='1111'
+    #   AUTH_AUTH0_CLIENT_SECRET='11119999-1111'
+    #   AUTH_AUTH0_REALM='Username-Password-Authentication'
+    elif auth_method=='auth0':
+        if all (k in os.environ for k in ("AUTH_AUTH0_ENDPOINT","AUTH_AUTH0_CLIENT_KEY","AUTH_AUTH0_CLIENT_SECRET")):
+            endpoint=os.environ.get('AUTH_AUTH0_ENDPOINT')
+            client_key=os.environ.get('AUTH_AUTH0_CLIENT_KEY')
+            client_secret=os.environ.get('AUTH_AUTH0_CLIENT_SECRET')
+            realm=os.getenv('AUTH_AUTH0_REALM', 'Username-Password-Authentication')
+            auth_auth0(endpoint, client_key, client_secret, realm, username, password)
+        else:
+            auth_failure('Missing one of mandatory environment variables for authentication method "auth0" : AUTH_AUTH0_ENDPOINT or AUTH_AUTH0_CLIENT_KEY or AUTH_AUTH0_CLIENT_SECRET')
 
     # No method handler found
     else:

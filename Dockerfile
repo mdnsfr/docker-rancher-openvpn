@@ -14,8 +14,11 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python-ldap \
     python-paramiko \
     python-requests \
+    python-pip \
     wget \
     && apt-get clean
+
+RUN pip install auth0-python==3.1.2
 
 COPY bin/* /usr/local/bin/
 RUN chmod 744 /usr/local/bin/entry.sh && \
