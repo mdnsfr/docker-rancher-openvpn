@@ -23,7 +23,7 @@ def auth_failure(reason, severity="INFO"):
     print >> sys.stderr, "["+severity+"] OpenVPN Authentication failure : " + reason
     exit(1)
 
-def auth_ldap(address, basedn, binddn, bindpwd, search, username, password):
+def auth_ldap(address, basedn, binddn, bindpwd, search, groupsallowed, groupbasedn, groupsearch, username, password):
     """ Ldap authentication handler """
     
     # Initializing connection to ldap server
@@ -45,17 +45,30 @@ def auth_ldap(address, basedn, binddn, bindpwd, search, username, password):
             conn.simple_bind_s(binddn, bindpwd)
         
         # Searching for user based on search pattern
-        result = conn.search_s(basedn, ldap.SCOPE_SUBTREE, search.replace('$username',username), None, 1)
+        result = conn.search_s(basedn, ldap.SCOPE_SUBTREE, search, None, 1)
         
         # Nothing found => failure
         if not result or len(result) != 1:
             auth_failure('Cannot find username '+ username)
         else:
             userdn=result[0][0]
-        
+
         try:
             # Trying to authenticate with user credentials
             conn.simple_bind_s(userdn, password)
+
+            if len(groupsallowed) > 0:
+                result = conn.search_s(groupbasedn, ldap.SCOPE_SUBTREE,
+                                       groupsearch.replace('$userdn',userdn),
+                                       None, 1)
+                if not result or len(result) < 1:
+                    auth_failure('No group found for username ' + username)
+                else:
+                    groups = [dn for (dn, attrs) in result]
+                    validgroups = set(groups).intersection(set(groupsallowed))
+                    if len(validgroups) == 0:
+                        auth_failure('No allowed group found for username ' + username)
+
             auth_success(username)
             
         except ldap.INVALID_CREDENTIALS:
@@ -113,7 +126,10 @@ if all (k in os.environ for k in ("username","password","AUTH_METHOD")):
     #   AUTH_METHOD='ldap'
     #   AUTH_LDAP_URL='ldap[s]://ldap.acme.tld[:port]'
     #   AUTH_LDAP_SEARCH='(uid=$username)'
-    #   AUTH_LDAP_BASEDN='dc=acme,dc=com'
+    #   AUTH_LDAP_BASEDN='dc=accounts,dc=acme,dc=com'
+    #   AUTH_LDAP_GROUP_ALLOWED='cn=admins,dc=groups,dc=acme,dc=com'  // space-separated; no group auth when empty
+    #   AUTH_LDAP_GROUP_SEARCH='(member=$username)'
+    #   AUTH_LDAP_GROUP_BASEDN='dc=groups,dc=acme,dc=com)'
     #   AUTH_LDAP_BINDDN='cn=admin,dc=acme,dc=com'
     #   AUTH_LDAP_BINDPWD='myadminpwd'
     # 
@@ -122,9 +138,12 @@ if all (k in os.environ for k in ("username","password","AUTH_METHOD")):
             address=os.environ.get('AUTH_LDAP_URL') 
             search=os.environ.get('AUTH_LDAP_SEARCH').replace('$username',username) 
             basedn=os.environ.get('AUTH_LDAP_BASEDN')
+            groupsallowed=os.environ.get('AUTH_LDAP_GROUP_ALLOWED').split()
+            groupsearch=os.environ.get('AUTH_LDAP_GROUP_SEARCH').replace('$username',username) 
+            groupbasedn=os.environ.get('AUTH_LDAP_GROUP_BASEDN')
             binddn=os.environ.get('AUTH_LDAP_BINDDN')
             bindpwd=os.environ.get('AUTH_LDAP_BINDPWD')
-            auth_ldap(address, basedn, binddn, bindpwd, search, username, password)
+            auth_ldap(address, basedn, binddn, bindpwd, search, groupsallowed, groupbasedn, groupsearch, username, password)
         else:
             auth_failure('Missing one of mandatory environment variables for authentication method "ldap" : AUTH_LDAP_URL or AUTH_LDAP_SEARCH or AUTH_LDAP_BASEDN')
             

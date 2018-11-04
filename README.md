@@ -155,6 +155,11 @@ These are mandatory variable to setup ldap authentication :
 - AUTH_LDAP_URL is the server address in URL format : AUTH_LDAP_URL=ldap[s]://hostnameOrIp[:port]
 - AUTH_LDAP_BASEDN is the base DN to search for, ex: AUTH_LDAP_BASEDN='dc=acme,dc=com'
 - AUTH_LDAP_SEARCH is the ldap search pattern to find user's dn, with a parameter $username, ex : AUTH_LDAP_SEARCH='(uid=$username)'
+- AUTH_LDAP_GROUP_ALLOWED is a space-separated list of group DNs allowed to authenticated, for example
+  AUTH_LDAP_GROUP_ALLOWED='cn=admins,dc=groups,dc=acme,dc=com cn=superadmins,dc=groups,dc=acme,dc=com'.
+  If AUTH_LDAP_GROUP_ALLOWED is empty, only the user filter is applied and AUTH_LDAP_GROUP_SEARCH and AUTH_LDAP_GROUP_BASEDN are ignored.
+- AUTH_LDAP_GROUP_SEARCH is the ldap search filter to find user groups, which can use both $username or the full user DN as $userdn, ex: AUTH_LDAP_GROUP_SEARCH='(member=$userdn)'
+- AUTH_LDAP_GROUP_BASEDN is the base DN for searching groups, ex AUTH_LDAP_GROUP_BASEDN='dc=groups,dc=acme,dc=com)'
 
 If your ldap server need to be authenticated to search directory, you can use optionnals binding variables: 
 
