@@ -14,7 +14,7 @@ OPENVPNDIR="/etc/openvpn"
 [ "$CERT_ORG" = "" ]        && export CERT_ORG="Bright Power"
 [ "$CERT_EMAIL" = "" ]      && export CERT_EMAIL="admin@brightpower.com"
 [ "$CERT_OU" = "" ]         && export CERT_OU="IT"
-[ "$VPNPOOL_NETWORK" = "" ] && export VPNPOOL_NETWORK="10.99.0.0"
+[ "$VPNPOOL_NETWORK" = "" ] && export VPNPOOL_NETWORK="10.98.0.0"
 [ "$VPNPOOL_CIDR" = "" ]    && export VPNPOOL_CIDR="16"
 [ "$REMOTE_IP" = "" ]       && export REMOTE_IP="vpn.ops.brightpowerinc.com"
 [ "$REMOTE_PORT" = "" ]     && export REMOTE_PORT="1194"
@@ -61,7 +61,6 @@ VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2
 cat > $OPENVPNDIR/server.conf <<- EOF
 port 1194
 proto tcp
-tun-mtu 1500
 dev tun
 ca easy-rsa/keys/ca.crt
 cert easy-rsa/keys/server.crt
@@ -70,21 +69,24 @@ dh easy-rsa/keys/dh2048.pem
 cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
+route $VPNPOOL_NETWORK $VPNPOOL_NETMASK
 push "dhcp-option DNS $PUSHDNS"
 push "dhcp-option DOMAIN $PUSHSEARCH"
-push "route 10.20.0.0 255.255.255.0"
-push "route 10.20.1.0 255.255.255.0"
-push "route 10.20.2.0 255.255.255.0"
-push "route 10.20.3.0 255.255.255.0"
+push "route 10.0.0.0 255.0.0.0"
 $RANCHER_METADATA_API
+ifconfig-pool-persist ipp.txt
 keepalive 10 120
 comp-lzo
 persist-key
 persist-tun
+status openvpn-status.log
 client-to-client
+max-clients 50
+user nobody
+group nogroup
 username-as-common-name
 client-cert-not-required
-
+verb 5
 script-security 3 system
 auth-user-pass-verify /usr/local/bin/openvpn-auth.sh via-env
 
