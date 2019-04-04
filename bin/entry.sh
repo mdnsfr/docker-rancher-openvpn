@@ -16,7 +16,7 @@ OPENVPNDIR="/etc/openvpn"
 [ "$CERT_OU" = "" ]         && export CERT_OU="IT"
 [ "$VPNPOOL_NETWORK" = "" ] && export VPNPOOL_NETWORK="10.98.0.0"
 [ "$VPNPOOL_CIDR" = "" ]    && export VPNPOOL_CIDR="16"
-[ "$REMOTE_IP" = "" ]       && export REMOTE_IP="vpn.ops.brightpowerinc.com"
+[ "$REMOTE_IP" = "" ]       && export REMOTE_IP="18.234.35.4"
 [ "$REMOTE_PORT" = "" ]     && export REMOTE_PORT="1194"
 [ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.250"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
@@ -121,12 +121,6 @@ if [ ! -d $OPENVPNDIR/easy-rsa ]; then
    openvpn --genkey --secret keys/ta.key
    popd
 fi
-
-#=====[ Enable tcp forwarding and add iptables MASQUERADE rule ]================
-echo 1 > /proc/sys/net/ipv4/ip_forward
-iptables -t nat -F
-iptables -t nat -A POSTROUTING -s $VPNPOOL_NETWORK/$VPNPOOL_NETMASK -j MASQUERADE
-
 
 /usr/local/bin/openvpn-get-client-config.sh > $OPENVPNDIR/client.conf
 
