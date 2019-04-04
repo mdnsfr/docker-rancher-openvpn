@@ -9,20 +9,17 @@ OPENVPNDIR="/etc/openvpn"
 
 # Providing defaults values for missing env variables
 [ "$CERT_COUNTRY" = "" ]    && export CERT_COUNTRY="US"
-[ "$CERT_PROVINCE" = "" ]   && export CERT_PROVINCE="AL"
-[ "$CERT_CITY" = "" ]       && export CERT_CITY="Birmingham"
-[ "$CERT_ORG" = "" ]        && export CERT_ORG="ACME"
-[ "$CERT_EMAIL" = "" ]      && export CERT_EMAIL="nobody@example.com"
+[ "$CERT_PROVINCE" = "" ]   && export CERT_PROVINCE="NY"
+[ "$CERT_CITY" = "" ]       && export CERT_CITY="New York"
+[ "$CERT_ORG" = "" ]        && export CERT_ORG="Bright Power"
+[ "$CERT_EMAIL" = "" ]      && export CERT_EMAIL="admin@brightpower.com"
 [ "$CERT_OU" = "" ]         && export CERT_OU="IT"
-[ "$VPNPOOL_NETWORK" = "" ] && export VPNPOOL_NETWORK="10.43.0.0"
+[ "$VPNPOOL_NETWORK" = "" ] && export VPNPOOL_NETWORK="10.99.0.0"
 [ "$VPNPOOL_CIDR" = "" ]    && export VPNPOOL_CIDR="16"
-[ "$REMOTE_IP" = "" ]       && export REMOTE_IP="ipOrHostname"
+[ "$REMOTE_IP" = "" ]       && export REMOTE_IP="vpn.ops.brightpowerinc.com"
 [ "$REMOTE_PORT" = "" ]     && export REMOTE_PORT="1194"
 [ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.250"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
-
-[ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.42.0.0"
-[ "$ROUTE_NETMASK" = "" ]   && export ROUTE_NETMASK="255.255.0.0"
 
 export RANCHER_METADATA_API='push "route 169.254.169.250 255.255.255.255"'
 [ "$NO_RANCHER_METADATA_API" != "" ] && export RANCHER_METADATA_API=""
@@ -64,7 +61,7 @@ VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2
 cat > $OPENVPNDIR/server.conf <<- EOF
 port 1194
 proto tcp
-link-mtu 1500
+tun-mtu 1500
 dev tun
 ca easy-rsa/keys/ca.crt
 cert easy-rsa/keys/server.crt
@@ -74,8 +71,11 @@ cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
 push "dhcp-option DNS $PUSHDNS"
-push "dhcp-option SEARCH $PUSHSEARCH"
-push "route $ROUTE_NETWORK $ROUTE_NETMASK"
+push "dhcp-option DOMAIN $PUSHSEARCH"
+push "route 10.20.0.0 255.255.255.0"
+push "route 10.20.1.0 255.255.255.0"
+push "route 10.20.2.0 255.255.255.0"
+push "route 10.20.3.0 255.255.255.0"
 $RANCHER_METADATA_API
 keepalive 10 120
 comp-lzo
@@ -142,4 +142,7 @@ cat $OPENVPNDIR/client.conf
 echo ""
 echo "=========================================================================="
 #=====[ Starting OpenVPN server ]===============================================
+
+sed -i -e 's/\#net\.ipv4\.ip_forward/net\.ipv4\.ip_forward/g' /etc/sysctl.conf
+
 /usr/sbin/openvpn --cd /etc/openvpn --config server.conf
