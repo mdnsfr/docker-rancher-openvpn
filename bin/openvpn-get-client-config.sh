@@ -14,14 +14,15 @@ resolv-retry infinite
 cipher AES-128-CBC
 auth SHA1
 nobind
-link-mtu 1500
+tun-mtu 1440
 persist-key
 persist-tun
 comp-lzo
 verb 3
 auth-user-pass
+auth-nocache
 auth-retry interact
-ns-cert-type server
+remote-cert-tls server
 <ca>
 $CA_CONTENT
 </ca>
