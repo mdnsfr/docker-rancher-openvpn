@@ -70,10 +70,9 @@ cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
 route $VPNPOOL_NETWORK $VPNPOOL_NETMASK
-push "dhcp-option DNS $PUSHDNS"
-push "dhcp-option DOMAIN $PUSHSEARCH"
+
 push "route 10.0.0.0 255.0.0.0"
-$RANCHER_METADATA_API
+#$RANCHER_METADATA_API
 ifconfig-pool-persist ipp.txt
 keepalive 10 120
 comp-lzo
@@ -86,7 +85,7 @@ user nobody
 group nogroup
 username-as-common-name
 client-cert-not-required
-verb 5
+verb 3
 script-security 3 system
 auth-user-pass-verify /usr/local/bin/openvpn-auth.sh via-env
 
@@ -139,6 +138,5 @@ echo ""
 echo "=========================================================================="
 #=====[ Starting OpenVPN server ]===============================================
 
-sed -i -e 's/\#net\.ipv4\.ip_forward/net\.ipv4\.ip_forward/g' /etc/sysctl.conf
 
 /usr/sbin/openvpn --cd /etc/openvpn --config server.conf
