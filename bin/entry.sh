@@ -21,6 +21,9 @@ OPENVPNDIR="/etc/openvpn"
 [ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.250"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
 
+[ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.42.0.0"
+[ "$ROUTE_NETMASK" = "" ] && export ROUTE_NETMASK="255.255.0.0"
+
 export RANCHER_METADATA_API='push "route 169.254.169.250 255.255.255.255"'
 [ "$NO_RANCHER_METADATA_API" != "" ] && export RANCHER_METADATA_API=""
 
@@ -61,6 +64,7 @@ VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2
 cat > $OPENVPNDIR/server.conf <<- EOF
 port 1194
 proto tcp
+link-mtu 1500
 dev tun
 ca easy-rsa/keys/ca.crt
 cert easy-rsa/keys/server.crt
@@ -69,10 +73,11 @@ dh easy-rsa/keys/dh2048.pem
 cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
-route $VPNPOOL_NETWORK $VPNPOOL_NETMASK
-
+push "dhcp-option DNS $PUSHDNS"
+push "dhcp-option DOMAIN $PUSHSEARCH"
+push "route $ROUTE_NETWORK $ROUTE_NETMASK"
 push "route 10.0.0.0 255.0.0.0"
-#$RANCHER_METADATA_API
+$RANCHER_METADATA_API
 ifconfig-pool-persist ipp.txt
 keepalive 10 120
 comp-lzo
@@ -85,7 +90,8 @@ user nobody
 group nogroup
 username-as-common-name
 client-cert-not-required
-verb 3
+verb 9
+
 script-security 3 system
 auth-user-pass-verify /usr/local/bin/openvpn-auth.sh via-env
 
