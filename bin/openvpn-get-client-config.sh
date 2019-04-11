@@ -14,11 +14,11 @@ resolv-retry infinite
 cipher AES-128-CBC
 auth SHA1
 nobind
-tun-mtu 1440
+link-mtu 1440
 persist-key
 persist-tun
 comp-lzo
-verb 3
+verb 6
 auth-user-pass
 auth-nocache
 auth-retry interact

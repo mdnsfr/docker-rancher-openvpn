@@ -22,7 +22,7 @@ OPENVPNDIR="/etc/openvpn"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
 
 [ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.42.0.0"
-[ "$ROUTE_NETMASK" = "" ] && export ROUTE_NETMASK="255.255.0.0"
+[ "$ROUTE_NETMASK" = "" ]   && export ROUTE_NETMASK="255.255.0.0"
 
 export RANCHER_METADATA_API='push "route 169.254.169.250 255.255.255.255"'
 [ "$NO_RANCHER_METADATA_API" != "" ] && export RANCHER_METADATA_API=""
@@ -74,23 +74,17 @@ cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
 push "dhcp-option DNS $PUSHDNS"
-push "dhcp-option DOMAIN $PUSHSEARCH"
+push "dhcp-option SEARCH $PUSHSEARCH"
 push "route $ROUTE_NETWORK $ROUTE_NETMASK"
-push "route 10.0.0.0 255.0.0.0"
 $RANCHER_METADATA_API
-ifconfig-pool-persist ipp.txt
 keepalive 10 120
 comp-lzo
 persist-key
 persist-tun
-status openvpn-status.log
 client-to-client
 max-clients 50
-user nobody
-group nogroup
 username-as-common-name
 client-cert-not-required
-verb 9
 
 script-security 3 system
 auth-user-pass-verify /usr/local/bin/openvpn-auth.sh via-env
@@ -127,6 +121,12 @@ if [ ! -d $OPENVPNDIR/easy-rsa ]; then
    popd
 fi
 
+#=====[ Enable tcp forwarding and add iptables MASQUERADE rule ]================
+echo 1 > /proc/sys/net/ipv4/ip_forward
+iptables -t nat -F
+iptables -t nat -A POSTROUTING -s $VPNPOOL_NETWORK/$VPNPOOL_NETMASK -j MASQUERADE
+
+
 /usr/local/bin/openvpn-get-client-config.sh > $OPENVPNDIR/client.conf
 
 echo "=====[ OpenVPN Server config ]============================================"
@@ -143,6 +143,4 @@ cat $OPENVPNDIR/client.conf
 echo ""
 echo "=========================================================================="
 #=====[ Starting OpenVPN server ]===============================================
-
-
 /usr/sbin/openvpn --cd /etc/openvpn --config server.conf
