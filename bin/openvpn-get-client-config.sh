@@ -8,7 +8,7 @@ cat <<- EOF
 remote $REMOTE_IP $REMOTE_PORT
 client
 dev tun
-proto tcp
+proto udp
 remote-random
 resolv-retry infinite
 cipher AES-128-CBC

@@ -63,7 +63,7 @@ VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2
 
 cat > $OPENVPNDIR/server.conf <<- EOF
 port 1194
-proto tcp
+proto udp
 link-mtu 1500
 dev tun
 ca easy-rsa/keys/ca.crt
