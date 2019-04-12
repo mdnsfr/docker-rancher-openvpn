@@ -18,7 +18,7 @@ OPENVPNDIR="/etc/openvpn"
 [ "$VPNPOOL_CIDR" = "" ]    && export VPNPOOL_CIDR="16"
 [ "$REMOTE_IP" = "" ]       && export REMOTE_IP="18.234.35.4"
 [ "$REMOTE_PORT" = "" ]     && export REMOTE_PORT="1194"
-[ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.250"
+[ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.254"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
 
 [ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.20.0.0"
@@ -63,8 +63,7 @@ VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2
 
 cat > $OPENVPNDIR/server.conf <<- EOF
 port 1194
-proto udp
-link-mtu 1500
+proto tcp
 dev tun
 ca easy-rsa/keys/ca.crt
 cert easy-rsa/keys/server.crt
@@ -73,8 +72,6 @@ dh easy-rsa/keys/dh2048.pem
 cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
-push "dhcp-option DNS $PUSHDNS"
-push "dhcp-option SEARCH $PUSHSEARCH"
 push "route $ROUTE_NETWORK $ROUTE_NETMASK"
 $RANCHER_METADATA_API
 keepalive 10 120
