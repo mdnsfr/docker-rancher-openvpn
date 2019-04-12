@@ -21,7 +21,7 @@ OPENVPNDIR="/etc/openvpn"
 [ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.250"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
 
-[ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.42.0.0"
+[ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.20.0.0"
 [ "$ROUTE_NETMASK" = "" ]   && export ROUTE_NETMASK="255.255.0.0"
 
 export RANCHER_METADATA_API='push "route 169.254.169.250 255.255.255.255"'
