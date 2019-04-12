@@ -73,6 +73,8 @@ cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
 push "route $ROUTE_NETWORK $ROUTE_NETMASK"
+push "route 10.30.0.0 $ROUTE_NETMASK"
+push "route 10.100.0.0 $ROUTE_NETMASK"
 $RANCHER_METADATA_API
 keepalive 10 120
 comp-lzo
