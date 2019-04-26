@@ -21,7 +21,7 @@ OPENVPNDIR="/etc/openvpn"
 [ "$PUSHDNS" = "" ]         && export PUSHDNS="169.254.169.254"
 [ "$PUSHSEARCH" = "" ]      && export PUSHSEARCH="rancher.internal"
 
-[ "$ROUTE_NETWORK" = "" ]   && export ROUTE_NETWORK="10.20.0.0"
+[ "$ROUTE_NETWORKS" = "" ]   && export ROUTE_NETWORKS="10.20.0.0 10.30.0.0 10.100.0.0 10.200.0.0"
 [ "$ROUTE_NETMASK" = "" ]   && export ROUTE_NETMASK="255.255.0.0"
 
 export RANCHER_METADATA_API='push "route 169.254.169.250 255.255.255.255"'
@@ -61,6 +61,13 @@ done
 #=====[ Generating server config ]==============================================
 VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2}')
 
+# Building `push route` config with given NETWORK IPS
+PUSH_ROUTING_CMD=""
+for ROUTE_NETWORK in ROUTE_NETWORKS
+do
+    PUSH_ROUTING_CMD+="push \"route ${ROUTE_NETWORK} ${ROUTE_NETMASK}\""$'\n'
+done
+
 cat > $OPENVPNDIR/server.conf <<- EOF
 port 1194
 proto tcp
@@ -72,10 +79,7 @@ dh easy-rsa/keys/dh2048.pem
 cipher AES-128-CBC
 auth SHA1
 server $VPNPOOL_NETWORK $VPNPOOL_NETMASK
-push "route $ROUTE_NETWORK $ROUTE_NETMASK"
-push "route 10.30.0.0 $ROUTE_NETMASK"
-push "route 10.100.0.0 $ROUTE_NETMASK"
-push "route 10.200.0.0 $ROUTE_NETMASK"
+$PUSH_ROUTING_CMD
 $RANCHER_METADATA_API
 keepalive 10 120
 comp-lzo
