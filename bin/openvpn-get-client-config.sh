@@ -22,6 +22,7 @@ auth-user-pass
 auth-nocache
 auth-retry interact
 remote-cert-tls server
+reneg-sec 0
 <ca>
 $CA_CONTENT
 </ca>

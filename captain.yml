@@ -1,0 +1,3 @@
+rancher-openvpn:
+  build: Dockerfile
+  image: docker-registry.brightpowerinc.com/rancher-openvpn
