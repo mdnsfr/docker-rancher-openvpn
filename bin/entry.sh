@@ -63,7 +63,7 @@ VPNPOOL_NETMASK=$(netmask -s $VPNPOOL_NETWORK/$VPNPOOL_CIDR | awk -F/ '{print $2
 
 # Building `push route` config with given NETWORK IPS
 PUSH_ROUTING_CMD=""
-for ROUTE_NETWORK in ROUTE_NETWORKS
+for ROUTE_NETWORK in $ROUTE_NETWORKS
 do
     PUSH_ROUTING_CMD+="push \"route ${ROUTE_NETWORK} ${ROUTE_NETMASK}\""$'\n'
 done
