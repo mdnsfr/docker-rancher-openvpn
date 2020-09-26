@@ -1,5 +1,4 @@
 FROM debian:jessie
-MAINTAINER Alexis Ducastel <alexis@ducastel.net>
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     easy-rsa \
@@ -13,9 +12,12 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     python-kerberos \
     python-ldap \
     python-paramiko \
-    python-requests \
+    python-pip \
     wget \
     && apt-get clean
+
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
 COPY bin/* /usr/local/bin/
 RUN chmod 744 /usr/local/bin/entry.sh && \
