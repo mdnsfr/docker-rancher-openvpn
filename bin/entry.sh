@@ -51,6 +51,7 @@ do
     echo "export $var='$var_data'" >> $OPENVPNDIR/auth.env
 done
 
+[ -e "$OPENVPNDIR/remote.env" ] && rm "$OPENVPNDIR/remote.env"
 env | grep "REMOTE_" | while read i
 do
     var=$(echo "$i" | awk -F= '{print $1}')
