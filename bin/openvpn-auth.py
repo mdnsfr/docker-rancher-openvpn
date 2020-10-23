@@ -49,7 +49,9 @@ def auth_http_digest(url, username, password):
 
 
 def auth_rancher_local(url, username, password):
-    if requests.post(url, data={"authProvider": "localauthconfig", "code": username + ":" + password}):
+    if requests.post(
+            url, data={"authProvider": "localauthconfig", "code": username + ":" + password},
+            verify=False, timeout=10):
         return auth_success(username)
     else:
         return auth_failure("Invalid credentials for username " + username)
